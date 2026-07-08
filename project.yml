@@ -19,6 +19,9 @@ targets:
     platform: iOS
     sources:
       - path: MotionBrush
+      - path: fixtures
+        buildPhase: resources
+        optional: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.motionbrush.app

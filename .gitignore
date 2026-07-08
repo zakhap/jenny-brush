@@ -14,3 +14,8 @@ DerivedData/
 # Xcode user state
 xcuserdata/
 *.xcuserstate
+
+# Test fixture videos (bundled locally, not committed)
+fixtures/*.mov
+fixtures/*.mp4
+fixtures/*.m4v
