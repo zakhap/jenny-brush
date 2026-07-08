@@ -28,9 +28,6 @@ final class AppModel {
     /// A transient message shown as a toast (FR-2 "Hold longer", FR-10 no-subject, E9 io).
     var toast: String?
 
-    /// When set, the canvas plays a demo stroke for this brush on next appear (FR-24).
-    var pendingDemoBrushID: String?
-
     init() {
         store.load()
     }
@@ -52,12 +49,13 @@ final class AppModel {
     // MARK: Pipeline outcomes (called by ProcessingScreen)
 
     /// Pipeline produced a brush in a temp dir — commit it atomically, select it,
-    /// return to canvas, and queue the demo stroke (FR-14, FR-24).
+    /// and return to canvas (FR-14).
     func finishBrushCreation(built: BrushAsset) {
         do {
             let committed = try store.commit(built)
             cleanupClip()
-            pendingDemoBrushID = committed.id
+            store.select(committed.id)
+            canvas.setBrush(store.activeBrush)
             screen = .canvas
         } catch {
             cleanupClip()

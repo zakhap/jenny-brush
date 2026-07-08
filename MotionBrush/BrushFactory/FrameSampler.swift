@@ -116,6 +116,14 @@ enum FrameSampler {
         let normalized = source.transformed(
             by: CGAffineTransform(translationX: -extent.origin.x, y: -extent.origin.y))
 
+        // CIContext.render(_:to:CVPixelBuffer) and the downstream CIImage(cvPixelBuffer:)
+        // + createCGImage read path disagree on vertical orientation by one flip, so
+        // buffers written here come back upside-down in StampProcessor. Pre-flip
+        // vertically so the whole pipeline (Vision matte, matted stamp, atlas, canvas,
+        // shelf preview) stays upright end-to-end.
+        let oriented = normalized.transformed(
+            by: CGAffineTransform(a: 1, b: 0, c: 0, d: -1, tx: 0, ty: extent.height))
+
         var out: CVPixelBuffer?
         let attrs: [CFString: Any] = [kCVPixelBufferIOSurfacePropertiesKey: [:] as CFDictionary]
         let status = CVPixelBufferCreate(
@@ -124,7 +132,7 @@ enum FrameSampler {
         guard status == kCVReturnSuccess, let out else { return buffer }
 
         ciContext.render(
-            normalized, to: out,
+            oriented, to: out,
             bounds: CGRect(origin: .zero, size: extent.size),
             colorSpace: CGColorSpaceCreateDeviceRGB())
         return out

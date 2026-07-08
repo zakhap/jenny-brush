@@ -115,15 +115,6 @@ struct CanvasScreen: View {
     private func syncBrushAndRestore() {
         model.canvas.restore(canvasPNG: model.store.loadCanvasPNG())
         model.canvas.setBrush(model.store.activeBrush)
-        if let demoID = model.pendingDemoBrushID, demoID == model.store.activeBrushID {
-            model.pendingDemoBrushID = nil
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                model.canvas.playDemoStroke()
-                DispatchQueue.main.asyncAfter(deadline: .now() + K.demoStrokeDuration + 0.3) {
-                    model.persistCanvas()
-                }
-            }
-        }
     }
 
     private func deleteBrush(_ brush: BrushAsset) {

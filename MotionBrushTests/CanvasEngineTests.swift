@@ -7,8 +7,11 @@ import XCTest
 /// Also covers E8 (tap-without-drag → single frame-0 stamp).
 final class CanvasEngineTests: XCTestCase {
 
-    /// 3 frames, widths 10/10/10 → spacing = 10 * 0.40 = 4 px each, constant.
-    private func uniformBrush(width: CGFloat = 10, count: Int = 3) -> StamperBrush {
+    /// Frames sized so spacing = width * K.spacingFactor == 4 px each, constant —
+    /// derived from the tunable so these exact-value assertions stay valid when
+    /// K.spacingFactor is retuned for feel.
+    private static let spacing4Width = 4 / K.spacingFactor
+    private func uniformBrush(width: CGFloat = spacing4Width, count: Int = 3) -> StamperBrush {
         StamperBrush(frames: Array(repeating: StamperBrushFrame(width: width), count: count))
     }
 
@@ -66,7 +69,7 @@ final class CanvasEngineTests: XCTestCase {
     // MARK: - Frame-index wraparound across a longer multi-cycle stroke
 
     func testFrameIndexWrapsForwardAcrossMultipleCycles() {
-        let brush = uniformBrush(width: 10, count: 2) // spacing = 4, 2 frames
+        let brush = uniformBrush(width: Self.spacing4Width, count: 2) // spacing = 4, 2 frames
         var stamper = Stamper()
         stamper.resetForNewStroke()
 

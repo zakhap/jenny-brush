@@ -53,7 +53,9 @@ final class RuntimeBrush {
     }
 
     var stamperBrush: StamperBrush {
-        StamperBrush(frames: frames.map { StamperBrushFrame(width: $0.pixelSize.width) })
+        // Spacing tracks the *rendered* stamp width (native × K.stampScale) so
+        // stamp density stays proportional after the display downscale.
+        StamperBrush(frames: frames.map { StamperBrushFrame(width: $0.pixelSize.width * K.stampScale) })
     }
 }
 
@@ -250,10 +252,13 @@ final class CanvasRenderer: NSObject, MTKViewDelegate {
         stamps.compactMap { stamp -> StampInstanceData? in
             guard stamp.frame >= 0, stamp.frame < brush.frames.count else { return nil }
             let f = brush.frames[stamp.frame]
-            let halfW = Float(f.pixelSize.width / 2)
-            let halfH = Float(f.pixelSize.height / 2)
-            let topLeftX = Float(stamp.center.x) - Float(f.anchor.x)
-            let topLeftY = Float(stamp.center.y) - Float(f.anchor.y)
+            // Display scale (K.stampScale): shrink the quad and the anchor offset
+            // together so the anchor still lands exactly on the stroke path point.
+            let s = Float(K.stampScale)
+            let halfW = Float(f.pixelSize.width) * s / 2
+            let halfH = Float(f.pixelSize.height) * s / 2
+            let topLeftX = Float(stamp.center.x) - Float(f.anchor.x) * s
+            let topLeftY = Float(stamp.center.y) - Float(f.anchor.y) * s
             return StampInstanceData(
                 center: SIMD2<Float>(topLeftX + halfW, topLeftY + halfH),
                 halfSize: SIMD2<Float>(halfW, halfH),

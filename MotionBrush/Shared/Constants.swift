@@ -28,7 +28,8 @@ enum K {
     static let atlasGutter: Int = 2             // px between rects
 
     // MARK: Drawing (FR-20)
-    static let spacingFactor: CGFloat = 0.40    // × current frame width
+    static let spacingFactor: CGFloat = 0.12    // × current (rendered) frame width — tighter = denser stamps
+    static let stampScale: CGFloat = 0.72       // display scale applied to every stamp (smaller than native)
     static let resetFrameIndexPerStroke = true
     static let rotateToTangent = false          // scaffolded, off in MVP
     static let velocitySpacing = false          // scaffolded, off in MVP
