@@ -54,6 +54,20 @@ struct Stamper {
         }
     }
 
+    /// Seed the starting frame (used by the renderer's rolling cursor so the
+    /// sprite advances continuously across taps/strokes rather than restarting
+    /// at 0 each time). Residual is not affected.
+    mutating func seed(frame: Int) {
+        frameIdx = max(0, frame)
+    }
+
+    /// Advance the frame one step forward, wrapping — used after a tap so the
+    /// next placement shows the next sprite frame.
+    mutating func advanceFrame(frameCount: Int) {
+        guard frameCount > 0 else { frameIdx = 0; return }
+        frameIdx = (frameIdx + 1) % frameCount
+    }
+
     /// Consumes a flattened polyline (already Catmull-Rom smoothed) and
     /// returns the stamps produced along it, advancing `residual`/`frameIdx`.
     @discardableResult
@@ -84,9 +98,10 @@ struct Stamper {
         return out
     }
 
-    /// E8: a tap with no movement places a single frame-0 stamp.
+    /// E8: a tap with no movement places a single stamp at the current frame
+    /// (frame 0 for a fresh, unseeded stamper; the rolling cursor otherwise).
     func tapStamp(at point: CGPoint) -> Stamp {
-        Stamp(center: point, frame: 0)
+        Stamp(center: point, frame: frameIdx)
     }
 
     private static func distance(_ a: CGPoint, _ b: CGPoint) -> CGFloat {

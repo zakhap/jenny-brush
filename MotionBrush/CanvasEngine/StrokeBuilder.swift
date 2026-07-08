@@ -85,16 +85,28 @@ final class StrokeBuilder {
     private var brush: StamperBrush
     private var hasMoved = false
     private var startPoint: CGPoint = .zero
+    private let startFrame: Int
 
-    init(brush: StamperBrush) {
+    /// `startFrame` seeds the sprite cursor so the frame index rolls forward
+    /// continuously across strokes/taps (the renderer passes its persistent
+    /// cursor here). Defaults to 0 for a standalone stroke.
+    init(brush: StamperBrush, startFrame: Int = 0) {
         self.brush = brush
+        self.startFrame = startFrame
     }
 
-    /// touchesBegan-equivalent. Resets all per-stroke state (FR-20).
+    /// The frame index the sprite cursor should resume from after this stroke —
+    /// the renderer stores this so the next stroke/tap continues the sequence.
+    var endFrameIndex: Int { stamper.frameIdx }
+
+    /// touchesBegan-equivalent. Resets per-stroke state, then seeds the rolling
+    /// frame cursor (FR-20 residual reset; frame index continues the sequence).
     func begin(at point: CGPoint) {
         rawPoints = [point]
         stamper = Stamper()
         stamper.resetForNewStroke()
+        let count = brush.frameCount
+        stamper.seed(frame: count > 0 ? ((startFrame % count) + count) % count : 0)
         confirmedStamps = []
         processedPolylineCount = 0
         hasMoved = false
@@ -143,6 +155,8 @@ final class StrokeBuilder {
     func end() -> [Stamp] {
         if !hasMoved {
             confirmedStamps = [stamper.tapStamp(at: startPoint)]
+            // Roll the cursor forward so the next tap shows the next sprite frame.
+            stamper.advanceFrame(frameCount: brush.frameCount)
         }
         return confirmedStamps
     }

@@ -113,6 +113,31 @@ final class CanvasEngineTests: XCTestCase {
         XCTAssertEqual(final, [Stamp(center: CGPoint(x: 5, y: 5), frame: 0)])
     }
 
+    // MARK: - Rolling sprite cursor across taps
+
+    func testTapUsesSeededFrameThenAdvances() {
+        let brush = uniformBrush(count: 3)
+        let builder = StrokeBuilder(brush: brush, startFrame: 2)
+        builder.begin(at: CGPoint(x: 1, y: 1))
+        XCTAssertEqual(builder.end(), [Stamp(center: CGPoint(x: 1, y: 1), frame: 2)])
+        XCTAssertEqual(builder.endFrameIndex, 0) // 2 -> wraps forward to 0 (count 3)
+    }
+
+    /// Simulates the renderer's persistent cursor: consecutive taps must step
+    /// through the sprite in order and wrap, never stick on frame 0.
+    func testConsecutiveTapsRollForwardAndWrap() {
+        let brush = uniformBrush(count: 4)
+        var cursor = 0
+        var placed: [Int] = []
+        for _ in 0..<6 {
+            let b = StrokeBuilder(brush: brush, startFrame: cursor)
+            b.begin(at: .zero)
+            placed.append(b.end()[0].frame)
+            cursor = b.endFrameIndex
+        }
+        XCTAssertEqual(placed, [0, 1, 2, 3, 0, 1])
+    }
+
     // MARK: - Zero-length segments are skipped without breaking residual accounting
 
     func testZeroLengthSegmentIsSkipped() {

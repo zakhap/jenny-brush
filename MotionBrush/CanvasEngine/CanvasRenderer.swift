@@ -80,6 +80,11 @@ final class CanvasRenderer: NSObject, MTKViewDelegate {
     private var liveConfirmedInstances: [StampInstanceData] = []
     private var livePredictedInstances: [StampInstanceData] = []
 
+    /// Persistent sprite cursor: the frame the next stroke/tap starts from, so
+    /// the brush rolls forward through its frames continuously (taps in a row
+    /// step 0,1,2,…). Reset when the brush changes or the canvas is cleared.
+    private var rollingFrame = 0
+
     private enum PendingRestore { case png(Data); case blank }
     private var pendingRestore: PendingRestore?
 
@@ -181,6 +186,7 @@ final class CanvasRenderer: NSObject, MTKViewDelegate {
     // MARK: - Brush loading (setBrush, §9.6)
 
     func setBrush(_ brush: BrushAsset?) {
+        rollingFrame = 0   // new brush → start its sprite sequence fresh
         guard let brush else {
             currentBrush = nil
             return
@@ -273,7 +279,7 @@ final class CanvasRenderer: NSObject, MTKViewDelegate {
 
     func beginStroke(at point: CGPoint) {
         guard let brush = currentBrush else { return }
-        let sb = StrokeBuilder(brush: brush.stamperBrush)
+        let sb = StrokeBuilder(brush: brush.stamperBrush, startFrame: rollingFrame)
         sb.begin(at: point)
         strokeBuilder = sb
         liveConfirmedInstances = []
@@ -312,6 +318,8 @@ final class CanvasRenderer: NSObject, MTKViewDelegate {
         }
         guard let sb = strokeBuilder, let brush = currentBrush else { return false }
         let finalStamps = sb.end()
+        // Advance the persistent cursor so the next stroke/tap continues the sequence.
+        rollingFrame = sb.endFrameIndex
         guard !finalStamps.isEmpty else { return false }
         let instances = resolve(finalStamps, brush: brush)
         commitStroke(instances: instances, texture: brush.arrayTexture)
@@ -341,6 +349,7 @@ final class CanvasRenderer: NSObject, MTKViewDelegate {
     func clear() {
         guard let base = baseTexture, let committed = committedTexture else { return }
         undoStack.removeAll()
+        rollingFrame = 0
         fillWhite(base)
         fillWhite(committed)
         requestRedraw()
