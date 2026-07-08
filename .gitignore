@@ -1,0 +1,16 @@
+# Xcode project is generated from project.yml via xcodegen — never committed.
+*.xcodeproj/
+*.xcworkspace/
+
+# Build artifacts
+build/
+DerivedData/
+.build/
+*.xcresult
+
+# macOS
+.DS_Store
+
+# Xcode user state
+xcuserdata/
+*.xcuserstate
